@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Tic Tac Toe</title>
+    
+    <!-- Adsterra Head Script -->
+    <script type="text/javascript">
+        atOptions = {
+            'key' : '1010999aa1bf06f71fead51c558fa48f',
+            'format' : 'iframe',
+            'height' : 50,
+            'width' : 320,
+            'params' : {}
+        };
+    </script>
+    <script type="text/javascript" src="//www.highperformanceformat.com/1010999aa1bf06f71fead51c558fa48f/invoke.js"></script>
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #0a0a0a;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .game-title {
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+            margin-bottom: 1rem;
+            font-size: 2.5em;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background: #222;
+            border: 2px solid #0ff;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .cell:hover {
+            box-shadow: 0 0 15px #0ff;
+            transform: scale(1.05);
+        }
+
+        .cell.x::before,
+        .cell.x::after {
+            content: '';
+            position: absolute;
+            width: 80%;
+            height: 4px;
+            background: #f0f;
+            border-radius: 2px;
+            box-shadow: 0 0 10px #f0f;
+        }
+
+        .cell.x::before {
+            transform: rotate(45deg);
+        }
+
+        .cell.x::after {
+            transform: rotate(-45deg);
+        }
+
+        .cell.o::before {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            border: 4px solid #0ff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #0ff;
+        }
+
+        .winning-cell {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .winning-line {
+            position: absolute;
+            height: 4px;
+            border-radius: 2px;
+            animation: drawLine 0.5s forwards;
+            z-index: 1;
+        }
+
+        @keyframes drawLine {
+            from { width: 0; opacity: 0; }
+            to { width: var(--line-width); opacity: 1; }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            animation: explode 1s forwards;
+            border-radius: 50%;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(1) translateY(-200px) translateX(var(--tx)); opacity: 0; }
+        }
+
+        .status {
+            color: #0ff;
+            font-size: 1.5em;
+            margin: 1rem 0;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .reset-btn {
+            margin-top: 1rem;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background: #222;
+            border: 2px solid #0ff;
+            color: #0ff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #0ff;
+            color: #222;
+            box-shadow: 0 0 15px #0ff;
+        }
+
+        /* Ad Container Styling */
+        .ad-container {
+            margin: 20px 0;
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid #0ff;
+            box-shadow: 0 0 10px #0ff;
+            background: rgba(0,0,0,0.7);
+        }
+    </style>
+</head>
+<body>
+    <h1 class="game-title">NEON TIC TAC TOE</h1>
+    
+    <div class="game-board" id="board"></div>
+    
+    <div class="status" id="status">Player X's turn</div>
+    
+    <button class="reset-btn" onclick="resetGame()">Reset Game</button>
+
+    <!-- Bottom Ad -->
+    <div class="ad-container">
+        <script type="text/javascript">
+            atOptions = {
+                'key' : '1010999aa1bf06f71fead51c558fa48f',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+            };
+            document.write('<scr' + 'ipt type="text/javascript" src="//www.highperformanceformat.com/1010999aa1bf06f71fead51c558fa48f/invoke.js"></scr' + 'ipt>');
+        </script>
+    </div>
+
+    <script>
+        let currentPlayer = 'X';
+        let gameState = ['', '', '', '', '', '', '', '', ''];
+        let gameActive = true;
+        const board = document.getElementById('board');
+        const status = document.getElementById('status');
+
+        // Initialize Board
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.setAttribute('data-index', i);
+            cell.addEventListener('click', handleCellClick);
+            board.appendChild(cell);
+        }
+
+        function handleCellClick(e) {
+            const cell = e.target;
+            const index = cell.getAttribute('data-index');
+
+            if (gameState[index] !== '' || !gameActive) return;
+
+            gameState[index] = currentPlayer;
+            cell.classList.add(currentPlayer.toLowerCase());
+
+            if (checkWin()) {
+                status.textContent = `Player ${currentPlayer} wins!`;
+                gameActive = false;
+                return;
+            }
+
+            if (gameState.every(cell => cell !== '')) {
+                status.textContent = "Game Draw!";
+                gameActive = false;
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            status.textContent = `Player ${currentPlayer}'s turn`;
+        }
+
+        function checkWin() {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+
+            return winPatterns.some(pattern => {
+                if (pattern.every(index => gameState[index] === currentPlayer)) {
+                    highlightWinningCombination(pattern);
+                    drawWinningLine(pattern);
+                    createConfetti();
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        function highlightWinningCombination(pattern) {
+            pattern.forEach(index => {
+                board.children[index].classList.add('winning-cell');
+            });
+        }
+
+        function drawWinningLine(pattern) {
+            const line = document.createElement('div');
+            line.className = 'winning-line';
+            
+            const firstCell = board.children[pattern[0]];
+            const lastCell = board.children[pattern[2]];
+            
+            const startX = firstCell.offsetLeft + firstCell.offsetWidth/2;
+            const startY = firstCell.offsetTop + firstCell.offsetHeight/2;
+            const endX = lastCell.offsetLeft + lastCell.offsetWidth/2;
+            const endY = lastCell.offsetTop + lastCell.offsetHeight/2;
+            
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            const length = Math.sqrt(deltaX**2 + deltaY**2);
+            const angle = Math.atan2(deltaY, deltaX) * 180/Math.PI;
+            
+            line.style.cssText = `
+                --line-width: ${length}px;
+                left: ${startX}px;
+                top: ${startY}px;
+                transform: rotate(${angle}deg);
+                transform-origin: 0 50%;
+                background: ${currentPlayer === 'X' ? '#f0f' : '#0ff'};
+                box-shadow: 0 0 15px ${currentPlayer === 'X' ? '#f0f' : '#0ff'};
+            `;
+            
+            board.appendChild(line);
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.cssText = `
+                    left: ${Math.random() * 100}%;
+                    background: hsl(${Math.random() * 360}, 100%, 50%);
+                    --tx: ${Math.random() * 100 - 50}px;
+                    animation-delay: ${Math.random() * 0.5}s;
+                `;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 1000);
+            }
+        }
+
+        function resetGame() {
+            gameState = ['', '', '', '', '', '', '', '', ''];
+            gameActive = true;
+            currentPlayer = 'X';
+            status.textContent = "Player X's turn";
+            
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.className = 'cell';
+            });
+            
+            document.querySelectorAll('.winning-line, .confetti').forEach(el => el.remove());
+        }
+    </script>
+</body>
+</html>
