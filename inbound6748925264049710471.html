@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Tic Tac Toe - Player vs Robot</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #0a0a0a;
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .game-title {
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+            margin-bottom: 0.5rem;
+            font-size: 2.5em;
+        }
+
+        .game-mode {
+            margin-bottom: 1rem;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            margin: 0 5px;
+            background: #222;
+            border: 2px solid #0ff;
+            color: #0ff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn:hover, .mode-btn.active {
+            background: #0ff;
+            color: #222;
+            box-shadow: 0 0 15px #0ff;
+        }
+
+        .players-container {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .player {
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .player1 {
+            color: #f0f;
+            text-shadow: 0 0 5px #f0f;
+            border: 2px solid #f0f;
+        }
+
+        .player2 {
+            color: #0ff;
+            text-shadow: 0 0 5px #0ff;
+            border: 2px solid #0ff;
+        }
+
+        .robot {
+            color: #ff0;
+            text-shadow: 0 0 5px #ff0;
+            border: 2px solid #ff0;
+        }
+
+        .active-player {
+            box-shadow: 0 0 15px;
+            transform: scale(1.05);
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            position: relative;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background: #222;
+            border: 2px solid #0ff;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .cell:hover {
+            box-shadow: 0 0 15px #0ff;
+            transform: scale(1.05);
+        }
+
+        .cell.x::before,
+        .cell.x::after {
+            content: '';
+            position: absolute;
+            width: 80%;
+            height: 4px;
+            background: #f0f;
+            border-radius: 2px;
+            box-shadow: 0 0 10px #f0f;
+        }
+
+        .cell.x::before {
+            transform: rotate(45deg);
+        }
+
+        .cell.x::after {
+            transform: rotate(-45deg);
+        }
+
+        .cell.o::before {
+            content: '';
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            border: 4px solid #0ff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #0ff;
+        }
+
+        .winning-cell {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .winning-line {
+            position: absolute;
+            height: 4px;
+            border-radius: 2px;
+            animation: drawLine 0.5s forwards;
+            z-index: 1;
+        }
+
+        @keyframes drawLine {
+            from { width: 0; opacity: 0; }
+            to { width: var(--line-width); opacity: 1; }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            animation: explode 1s forwards;
+            border-radius: 50%;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(1) translateY(-200px) translateX(var(--tx)); opacity: 0; }
+        }
+
+        .status {
+            color: #0ff;
+            font-size: 1.5em;
+            margin: 1rem 0;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .reset-btn {
+            margin-top: 1rem;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background: #222;
+            border: 2px solid #0ff;
+            color: #0ff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #0ff;
+            color: #222;
+            box-shadow: 0 0 15px #0ff;
+        }
+
+        .ad-container {
+            margin: 20px 0;
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid #0ff;
+            box-shadow: 0 0 10px #0ff;
+            background: rgba(0,0,0,0.7);
+            width: 320px;
+            height: 50px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="game-title">NEON TIC TAC TOE</h1>
+    
+    <div class="game-mode">
+        <button class="mode-btn active" id="pvp-mode">Player vs Player</button>
+        <button class="mode-btn" id="pve-mode">Player vs Robot</button>
+    </div>
+    
+    <div class="players-container">
+        <div class="player player1 active-player" id="player1">Player 1 (X)</div>
+        <div class="player player2" id="player2">Player 2 (O)</div>
+    </div>
+    
+    <div class="game-board" id="board"></div>
+    
+    <div class="status" id="status">Player 1's turn (X)</div>
+    
+    <button class="reset-btn" onclick="resetGame()">Reset Game</button>
+
+    <!-- Updated Adsterra Ad -->
+    <div class="ad-container">
+        <script type="text/javascript">
+            atOptions = {
+                'key' : 'aa3f5f1c057c9dc4aab38a563915278e',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+            };
+            document.write('<scr' + 'ipt type="text/javascript" src="https://www.profitableratecpm.com/manfgiuc9?key=aa3f5f1c057c9dc4aab38a563915278e"></scr' + 'ipt>');
+        </script>
+    </div>
+
+    <script>
+        let currentPlayer = 'X';
+        let gameState = ['', '', '', '', '', '', '', '', ''];
+        let gameActive = true;
+        let gameMode = 'pvp'; // 'pvp' or 'pve'
+        const board = document.getElementById('board');
+        const status = document.getElementById('status');
+        const player1Element = document.getElementById('player1');
+        const player2Element = document.getElementById('player2');
+        const pvpModeBtn = document.getElementById('pvp-mode');
+        const pveModeBtn = document.getElementById('pve-mode');
+
+        // Initialize Board
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.setAttribute('data-index', i);
+            cell.addEventListener('click', handleCellClick);
+            board.appendChild(cell);
+        }
+
+        // Game Mode Selection
+        pvpModeBtn.addEventListener('click', () => {
+            gameMode = 'pvp';
+            pvpModeBtn.classList.add('active');
+            pveModeBtn.classList.remove('active');
+            player2Element.textContent = "Player 2 (O)";
+            player2Element.classList.remove('robot');
+            resetGame();
+        });
+
+        pveModeBtn.addEventListener('click', () => {
+            gameMode = 'pve';
+            pveModeBtn.classList.add('active');
+            pvpModeBtn.classList.remove('active');
+            player2Element.textContent = "Robot (O)";
+            player2Element.classList.add('robot');
+            resetGame();
+        });
+
+        function handleCellClick(e) {
+            const cell = e.target;
+            const index = cell.getAttribute('data-index');
+
+            if (gameState[index] !== '' || !gameActive) return;
+
+            makeMove(index, currentPlayer);
+
+            if (checkWin()) {
+                status.textContent = gameMode === 'pve' && currentPlayer === 'O' 
+                    ? "Robot wins!" 
+                    : `Player ${currentPlayer === 'X' ? '1' : '2'} wins!`;
+                highlightWinner(currentPlayer);
+                gameActive = false;
+                return;
+            }
+
+            if (gameState.every(cell => cell !== '')) {
+                status.textContent = "Game Draw!";
+                gameActive = false;
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            updatePlayerTurn();
+
+            // Robot's turn in PvE mode
+            if (gameMode === 'pve' && currentPlayer === 'O' && gameActive) {
+                setTimeout(robotMove, 500);
+            }
+        }
+
+        function makeMove(index, player) {
+            gameState[index] = player;
+            board.children[index].classList.add(player.toLowerCase());
+        }
+
+        function robotMove() {
+            if (!gameActive) return;
+
+            // Simple AI: Try to win, then block, then random move
+            let move = findWinningMove('O') || 
+                      findWinningMove('X') || 
+                      findRandomMove();
+
+            if (move !== null) {
+                makeMove(move, 'O');
+
+                if (checkWin()) {
+                    status.textContent = "Robot wins!";
+                    highlightWinner('O');
+                    gameActive = false;
+                    return;
+                }
+
+                if (gameState.every(cell => cell !== '')) {
+                    status.textContent = "Game Draw!";
+                    gameActive = false;
+                    return;
+                }
+
+                currentPlayer = 'X';
+                updatePlayerTurn();
+            }
+        }
+
+        function findWinningMove(player) {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6]  // diagonals
+            ];
+
+            for (const pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                // Check for two in a row and one empty
+                if (gameState[a] === player && gameState[b] === player && gameState[c] === '') return c;
+                if (gameState[a] === player && gameState[c] === player && gameState[b] === '') return b;
+                if (gameState[b] === player && gameState[c] === player && gameState[a] === '') return a;
+            }
+            return null;
+        }
+
+        function findRandomMove() {
+            const emptyCells = gameState.reduce((acc, cell, index) => {
+                if (cell === '') acc.push(index);
+                return acc;
+            }, []);
+
+            return emptyCells.length > 0 
+                ? emptyCells[Math.floor(Math.random() * emptyCells.length)] 
+                : null;
+        }
+
+        function updatePlayerTurn() {
+            if (currentPlayer === 'X') {
+                player1Element.classList.add('active-player');
+                player2Element.classList.remove('active-player');
+                status.textContent = gameMode === 'pve' 
+                    ? "Your turn (X)" 
+                    : "Player 1's turn (X)";
+            } else {
+                player1Element.classList.remove('active-player');
+                player2Element.classList.add('active-player');
+                status.textContent = gameMode === 'pve' 
+                    ? "Robot thinking..." 
+                    : "Player 2's turn (O)";
+            }
+        }
+
+        function highlightWinner(winner) {
+            if (winner === 'X') {
+                player1Element.style.boxShadow = '0 0 20px #f0f';
+            } else {
+                player2Element.style.boxShadow = gameMode === 'pve' 
+                    ? '0 0 20px #ff0' 
+                    : '0 0 20px #0ff';
+            }
+        }
+
+        function checkWin() {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+
+            return winPatterns.some(pattern => {
+                if (pattern.every(index => gameState[index] === currentPlayer)) {
+                    highlightWinningCombination(pattern);
+                    drawWinningLine(pattern);
+                    createConfetti();
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        function highlightWinningCombination(pattern) {
+            pattern.forEach(index => {
+                board.children[index].classList.add('winning-cell');
+            });
+        }
+
+        function drawWinningLine(pattern) {
+            const line = document.createElement('div');
+            line.className = 'winning-line';
+            
+            const firstCell = board.children[pattern[0]];
+            const lastCell = board.children[pattern[2]];
+            
+            const startX = firstCell.offsetLeft + firstCell.offsetWidth/2;
+            const startY = firstCell.offsetTop + firstCell.offsetHeight/2;
+            const endX = lastCell.offsetLeft + lastCell.offsetWidth/2;
+            const endY = lastCell.offsetTop + lastCell.offsetHeight/2;
+            
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            const length = Math.sqrt(deltaX**2 + deltaY**2);
+            const angle = Math.atan2(deltaY, deltaX) * 180/Math.PI;
+            
+            line.style.cssText = `
+                --line-width: ${length}px;
+                left: ${startX}px;
+                top: ${startY}px;
+                transform: rotate(${angle}deg);
+                transform-origin: 0 50%;
+                background: ${currentPlayer === 'X' ? '#f0f' : '#0ff'};
+                box-shadow: 0 0 15px ${currentPlayer === 'X' ? '#f0f' : '#0ff'};
+            `;
+            
+            board.appendChild(line);
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.cssText = `
+                    left: ${Math.random() * 100}%;
+                    background: hsl(${Math.random() * 360}, 100%, 50%);
+                    --tx: ${Math.random() * 100 - 50}px;
+                    animation-delay: ${Math.random() * 0.5}s;
+                `;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 1000);
+            }
+        }
+
+        function resetGame() {
+            gameState = ['', '', '', '', '', '', '', '', ''];
+            gameActive = true;
+            currentPlayer = 'X';
+            status.textContent = gameMode === 'pve' 
+                ? "Your turn (X)" 
+                : "Player 1's turn (X)";
+            
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.className = 'cell';
+            });
+            
+            document.querySelectorAll('.winning-line, .confetti').forEach(el => el.remove());
+            
+            player1Element.classList.add('active-player');
+            player2Element.classList.remove('active-player');
+            player1Element.style.boxShadow = '';
+            player2Element.style.boxShadow = '';
+        }
+    </script>
+</body>
+</html>
